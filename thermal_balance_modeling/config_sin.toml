@@ -1,0 +1,10 @@
+# Paths are relative to this file. Replace the one reported point with your sweep.
+material = "SiN"
+absorption_file = "data/reported_sin_peak.csv"
+selection = "max_peak"                  # Or "first_peak"
+height_nm = 400.0
+spectrum_file = "data/sin_cataldo_2012.csv"
+reference_pressure_mbar = 0.1
+decomposition_temperature_k = 1950.0    # Assumed material threshold
+temperature_max_k = 2500.0
+# nonlinear_file = "data/my_sin_nonlinear.csv"  # Optional material-specific TPA/FCA

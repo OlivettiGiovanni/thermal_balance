@@ -1,0 +1,33 @@
+{
+  "profile": "sin",
+  "radius_nm": 585.0,
+  "height_nm": 400.0,
+  "decomposition_temperature_k": 1950.0,
+  "selection": "max_peak",
+  "selected_linear_power_w": 1.1317201e-09,
+  "material_file": "sin_cataldo_2012.csv",
+  "radiation_model": "provisional matched-volume spheroid dipole, supplied spectral band only",
+  "radiation_wavelength_um": [
+    1.0,
+    666.666666667
+  ],
+  "max_emission_fraction_outside_dipole": 0.9999401738183997,
+  "nonlinear_model": "TPA=FCA=0 (coefficients not supplied)",
+  "bga_model": "zero by assumption for SiN",
+  "alpha0_m_inv": null,
+  "linear_absorption_note": "alpha0=P_selected / integral(I_local dV); without that integral only power is identified",
+  "intensity_integral_w_m": null,
+  "intensity_squared_integral_w2_per_m": null,
+  "reference_pressure_mbar": 0.1,
+  "environment_temperature_k": 300.0,
+  "gas_model": "free-molecular air, mass=28.965 u, gamma=1.4",
+  "accommodation": 0.8,
+  "gas_coefficient_w_per_mbar_k": 3.3908842959479596e-10,
+  "pressure_analysis": {
+    "p_abs_w": {
+      "status": "cold_branch_reaches_vacuum_equilibrium",
+      "critical_pressure_mbar": null,
+      "vacuum_temperature_k": 477.7835216819682
+    }
+  }
+}

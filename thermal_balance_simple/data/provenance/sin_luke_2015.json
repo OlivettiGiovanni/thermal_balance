@@ -1,0 +1,125 @@
+{
+  "dataset": "sin_luke_2015.csv",
+  "reference": "Luke et al., Optics Letters 40, 4823-4826 (2015)",
+  "doi": "10.1364/OL.40.004823",
+  "source": "Figure 1 solid green measured n and solid red measured k",
+  "source_kind": "digitized published fitted optical-constant curves; not raw ellipsometry data",
+  "author_pdf_url": "https://lipson.ee.columbia.edu/sites/lipson.ee.columbia.edu/files/content/Broadband%20mid-infrared%20frequency%20comb%20generation%20in%20a%20Si3N4%20microresonator%20.pdf",
+  "link_origin": "https://lipson.ee.columbia.edu/publications",
+  "retrieval_date": "2026-10-09",
+  "pdf_sha256": "111ce7631a8b0ae970956c6d55f4fea7064dfbcec852dd57466c34ecd7cd9628",
+  "figure_sha256": "15d660db4244b0594ae1714fce0cb34f4525fcd4c2dc99cdf0afa88073a8311a",
+  "figure_size_px": [
+    1000,
+    412
+  ],
+  "film": "340 nm LPCVD Si3N4 on 3.1 um thermal SiO2/silicon; annealed 3 h at 1200 C",
+  "stress": "Numerical residual stress of the optical-characterization sample not established",
+  "measurement": "M-2000 / IR-VASE; Lorentzian/Gaussian oscillator fits",
+  "thermal_assumption": "The same fixed spectrum is used at every particle temperature; no high-T optical validation",
+  "calibration": {
+    "wavelength_um_and_x_px": [
+      [
+        5,
+        10,
+        15,
+        20,
+        25,
+        30
+      ],
+      [
+        161.5,
+        304.4,
+        446.3,
+        589.2,
+        732.1,
+        875.0
+      ]
+    ],
+    "n_and_y_px": [
+      [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      [
+        345.5,
+        271.3,
+        197.2,
+        123.0,
+        48.3
+      ]
+    ],
+    "k_and_y_px": [
+      [
+        0,
+        0.5,
+        1,
+        1.5,
+        2,
+        2.5
+      ],
+      [
+        345.5,
+        286.0,
+        226.5,
+        167.0,
+        107.5,
+        48.3
+      ]
+    ],
+    "method": "Linear least-squares fit to manually inspected tick centers",
+    "one_pixel_um": 0.035045559226995086,
+    "one_pixel_n": 0.013464386697185936,
+    "one_pixel_k": 0.00840941854877463
+  },
+  "csv_wavelength_range_um": [
+    1.4,
+    31.6
+  ],
+  "csv_rows": 303,
+  "sampling_step_um": 0.1,
+  "rounding": "n and k rounded to 0.01; this is reporting resolution, not experimental uncertainty",
+  "approximate_graphical_resolution": {
+    "n": 0.03,
+    "k": 0.02
+  },
+  "zero_k_intervals_um": [
+    [
+      1.4,
+      5.0
+    ],
+    [
+      5.5,
+      5.9
+    ],
+    [
+      6.5,
+      6.5
+    ],
+    [
+      7.0,
+      7.2
+    ]
+  ],
+  "zero_k_meaning": "Values below graphical resolution (~0.02) stored as zero; do not infer vanishing absorption",
+  "interpolated_green_columns": [
+    268,
+    269,
+    270,
+    271,
+    365,
+    366
+  ],
+  "interpolation_reason": "Solid green curve is locally hidden by red curve; bridge only 2-4 image columns",
+  "notes": [
+    "The caption says 1.4-32 um, but resolved curves end near 31.65 um; output stops at 31.6 without extrapolation.",
+    "The dotted NIR+MIR Sellmeier curve, blue NIR-only curve, inset, and legend are excluded.",
+    "Source line thickness and overlapping curves limit accuracy; n near the short-wave end is particularly unresolved.",
+    "A global error bound is unavailable; high-temperature emission can depend on weak near-IR loss not resolved by the figure.",
+    "No replacement of unresolved k using the laser absorption coefficient and no spectrum extrapolation were performed.",
+    "The figure's baseline threshold is a digitization convention, not an experimental detection limit."
+  ]
+}

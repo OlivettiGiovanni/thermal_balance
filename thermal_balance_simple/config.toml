@@ -1,0 +1,33 @@
+# Only this file is loaded. Input paths are relative to this file.
+[absorption]
+file = "../Absorption_calculations/Resonant/cylindrical_np_absorption/Results/updates_validation/07_standing_wave_antinode/sweep.csv"
+selection = "max_peak"             # "max_peak" (global maximum) or "first_peak"
+prominence_fraction = 0.03          # Only for first_peak; relative to max absorption/V
+
+[material]
+file = "data/sin_cataldo_2012.csv"   # Or sin_gautam_2016.csv / sin_luke_2015.csv
+# cataldo 2012: amorphous low-stress SiN
+# gautam 2016: high-strees SiN
+# luke 2015: high-stress annealed SiN 
+
+
+[geometry]
+height_nm = 400.0
+
+[gas]                              # Air; fixed gas properties
+mass_amu = 28.965
+gamma = 1.4
+accommodation = 0.8
+
+[radiation]                        # Spectral spheroid model, no greybody emissivity
+integration_points = 2000
+
+[analysis]
+environment_temperature_k = 300.0
+reference_pressure_mbar = 0.1     # Used directly for P_gas(T); 0.01 mbar = 1 Pa
+decomposition_temperature_k = 1950.0 # Assumed threshold
+temperature_max_k = 2500.0
+temperature_points = 401
+
+[plot]
+dpi = 200                          # PNG only; output directory is a CLI argument
