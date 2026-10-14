@@ -1,6 +1,15 @@
 {
   "intensity_w_um2": 0.1,
   "reference_pressure_mbar": 0.1,
+  "intensity_range_w_um2": [
+    0.01,
+    1.0
+  ],
+  "intensity_scale_range": [
+    0.1,
+    10.0
+  ],
+  "intensity_points": 41,
   "temperature_max_k": 1600.0,
   "temperature_points": 401,
   "environment_temperature_k": 300.0,

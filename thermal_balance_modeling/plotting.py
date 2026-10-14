@@ -1,4 +1,4 @@
-"""Create PNG figures from saved results; changing a configuration requires a new run."""
+"""Plot saved absorption mechanisms and thermal powers; no model recalculation."""
 import argparse
 import json
 from pathlib import Path
@@ -6,281 +6,192 @@ from pathlib import Path
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 import numpy as np
 
 
-STYLE = {"font.size": 10, "axes.titlesize": 11, "axes.labelsize": 11,
+STYLE = {"font.size": 10, "axes.titlesize": 13, "axes.labelsize": 11,
          "axes.spines.top": False, "axes.spines.right": False, "axes.grid": True,
-         "grid.alpha": .2, "figure.facecolor": "white", "axes.facecolor": "white",
+         "grid.alpha": .18, "figure.facecolor": "white", "axes.facecolor": "white",
          "legend.frameon": False, "legend.fontsize": 9, "savefig.facecolor": "white"}
-COLORS = {"linear": "#885aa6", "tpa": "#be4b31", "fca": "#ce8c19",
-          "bga": "#398957", "total": "#235d96", "bb": "#228665", "gas": "#777777"}
-VARIANTS = [("printed", "empirical", "#b34935", "-"),
-            ("physical", "empirical", "#225f9e", "-"),
-            ("printed", "drude", "#b34935", "--"),
-            ("physical", "drude", "#225f9e", "--")]
+COLORS = {"tpa": "#bc5733", "fca": "#246ca0", "bga": "#368058"}
+OBSOLETE_PLOTS = ("coefficient_comparison.png", "tpa_comparison.png", "fca_comparison.png",
+                  "power_comparison.png", "critical_pressure.png", "absorption_selection.png",
+                  "pressure_balance.png")
 
 
 def read_table(path):
-    """Read a numeric CSV; preserve a one-row table as an array."""
-    return np.atleast_1d(np.genfromtxt(path, delimiter=",", names=True, encoding="utf-8"))
+    """Retain string status/model columns and the shape of one-row CSV tables."""
+    with Path(path).open() as stream:
+        columns = stream.readline().strip().split(",")
+    # Force numerical empty columns to NaN; dtype inference otherwise calls them False.
+    converters = {name: lambda value: float(value) if value.strip() else np.nan
+                  for name in columns if name not in ("variant", "status")}
+    return np.atleast_1d(np.genfromtxt(path, delimiter=",", names=True, dtype=None,
+                                     encoding="utf-8", converters=converters))
 
 
-def curve(ax, temperature, values, label, color, style="-", reference=False):
-    """Plot positive finite values; physical zeros are never replaced by tiny numbers."""
-    positive = np.isfinite(values) & (values > 0)
-    if not np.any(positive):
-        return False
-    if reference:
-        selected = np.flatnonzero(positive)[::max(1, positive.sum() // 24)]
-        ax.plot(temperature[selected], values[selected], linestyle="none", marker="o",
-                markersize=4, markerfacecolor="none", color=color, label=label, alpha=.75)
-    else:
-        ax.plot(temperature, np.where(positive, values, np.nan), color=color,
-                linestyle=style, linewidth=2, label=label)
-    return True
-
-
-def logarithmic_axes(ax, temperature, ylabel):
-    """Show low-temperature values while limiting numerical tails to twelve decades."""
-    positive = [np.asarray(line.get_ydata())[np.isfinite(line.get_ydata()) & (line.get_ydata() > 0)]
-                for line in ax.lines]
-    positive = [values for values in positive if values.size]
-    if positive:
-        upper = max(values.max() for values in positive) * 2
-        ax.set_ylim(max(min(values.min() for values in positive) / 2, upper / 1e12), upper)
-        ax.legend(loc="best")
-    else:
-        ax.set_ylim(1e-3, 1)
-        ax.text(.5, .5, "No positive values to display", ha="center", transform=ax.transAxes)
-    ax.set(yscale="log", xlabel="Particle temperature (K)", ylabel=ylabel,
-           xlim=(temperature.min(), temperature.max()))
-
-
-def context(summary):
-    """Short geometry and input-pressure label, using mbar throughout."""
-    radius = summary.get("radius_nm")
-    geometry = f"R = {radius:g} nm" if radius is not None else ""
-    if summary.get("height_nm") is not None:
-        geometry += f", H = {summary['height_nm']:g} nm"
-    intensity = summary.get("intensity_w_um2")
-    if intensity is not None:
-        geometry += f" | I = {intensity:g} W/µm²"
-    pressure = summary.get("reference_pressure_mbar")
-    return geometry + (f" | p = {pressure:g} mbar" if pressure is not None else "")
-
-
-def save(fig, output, name, dpi, footer=""):
-    """Save one PNG and close it."""
-    if footer:
-        fig.text(.5, .025, footer, ha="center", va="bottom", fontsize=9, color="#555555")
-    fig.tight_layout(rect=(0, .10 if footer else 0, 1, .95))
+def save(fig, output, name, dpi):
+    """Save one figure and close it, including the external legend and notes."""
     path = output / name
     fig.savefig(path, dpi=dpi, bbox_inches="tight")
     plt.close(fig)
     return path
 
 
-def reference_curve(ax, reference, name, label, color):
-    """Add an available digitized reference column, keeping its native units."""
-    if reference is not None and name in reference.dtype.names:
-        curve(ax, reference["temperature_k"], reference[name], label, color, reference=True)
+def absorption_curve(ax, temperature, values, color, style="-", dots=False, label=None):
+    """Preserve zero/missing-value gaps on logarithmic axes; thin reference dots."""
+    positive = np.isfinite(values) & (values > 0)
+    if dots:
+        indices = np.flatnonzero(positive)
+        indices = indices[::max(1, int(np.ceil(len(indices) / 32)))]
+        ax.plot(temperature[indices], values[indices], linestyle="none", marker="o",
+                markersize=4.2, markerfacecolor="white", markeredgewidth=1.1,
+                color=color, zorder=4, label=label)
+    else:
+        ax.plot(temperature, np.where(positive, values, np.nan), color=color,
+                linestyle=style, linewidth=2, label=label)
 
 
-def intensity_label(summary, level):
-    """Identify the reference intensity instead of implying a like-for-like overlay."""
-    value = summary.get(f"reference_fig4_{level}_intensity_w_um2")
-    return f"Fig. 4: {value:g} W/µm²" if value is not None else f"Fig. 4: {level} intensity"
+def comparison_legend(fig):
+    """Lay out one row per mechanism: name, digitized points, first and second model."""
+    rows = [("TPA:", "tpa", "Sinclair (semi-empirical)", "Physical pairing"),
+            ("FCA:", "fca", "Sturm empirical", "Drude"),
+            ("Band gap:", "bga", "Sturm empirical", "")]
+    cells = []
+    for title, mechanism, first, second in rows:
+        color = COLORS[mechanism]
+        empty = Line2D([], [], linestyle="none", color="none")
+        cells.append([(empty, title),
+                      (Line2D([], [], linestyle="none", marker="o", color=color,
+                              markerfacecolor="white", markersize=4.5), "Digitized"),
+                      (Line2D([], [], color=color, linewidth=2), first),
+                      (Line2D([], [], color=color, linestyle="--", linewidth=2)
+                       if second else empty, second)])
+    # Matplotlib fills multi-column legends column-first, so transpose the rows.
+    entries = [cells[row][column] for column in range(4) for row in range(3)]
+    legend = fig.legend(*zip(*entries), loc="center", bbox_to_anchor=(.50, .17),
+                        ncol=4, handlelength=2.7, columnspacing=1.7, labelspacing=.9)
+    for text in legend.get_texts()[:3]:
+        text.set_weight("bold")
 
 
-def coefficient_plot(data, reference, summary, output, dpi):
-    """Separate component physics from the four choices of total absorption model."""
-    fig, axes = plt.subplots(1, 2, figsize=(12.3, 5.2))
+def absorption_comparison(data, reference, summary, output, dpi):
+    """Compare all three absorption mechanisms against the corresponding Fig. 4 data."""
+    fig, ax = plt.subplots(figsize=(10.2, 7.3))
+    fig.subplots_adjust(left=.11, right=.98, bottom=.31, top=.88)
     temperature = data["temperature_k"]
-    for column, label, color in [("alpha0_m_inv", "Linear", COLORS["linear"]),
-                                ("tpa_physical_m_inv", "TPA: physical", COLORS["tpa"]),
-                                ("fca_empirical_m_inv", "FCA: empirical", COLORS["fca"]),
-                                ("bga_m_inv", "Band-gap", COLORS["bga"])]:
-        curve(axes[0], temperature, data[column] / 100, label, color)  # m⁻¹ -> cm⁻¹.
-    for tpa, fca, color, style in VARIANTS:
-        total = data["alpha0_m_inv"] + data[f"tpa_{tpa}_m_inv"] + data[f"fca_{fca}_m_inv"] + data["bga_m_inv"]
-        curve(axes[1], temperature, total / 100, f"{tpa} TPA + {fca} FCA", color, style)
-    reference_curve(axes[0], reference, "bga_cm_inv", "Fig. 4 band-gap (digitized)", COLORS["bga"])
-    for level, color in [("low", "#444444"), ("high", "#999999")]:
-        reference_curve(axes[1], reference, f"total_{level}_cm_inv", intensity_label(summary, level), color)
-    for ax, title in zip(axes, ["Absorption contributions", "Total coefficient: four variants"]):
-        logarithmic_axes(ax, temperature, r"Absorption coefficient (cm$^{-1}$)")
-        ax.set_title(title)
-    fig.suptitle("Silicon | " + context(summary))
-    return save(fig, output, "coefficient_comparison.png", dpi,
-                "Open circles: approximate paper references, at their stated low/high intensities.\n"
-                "Model curves use the configured intensity. Drude mobility is extrapolated above 500 K.")
+    for mechanism, models in [("tpa", ("printed", "physical")),
+                              ("fca", ("empirical", "drude")), ("bga", (None,))]:
+        for index, model in enumerate(models):
+            column = f"{mechanism}_{model}_m_inv" if model else "bga_m_inv"
+            absorption_curve(ax, temperature, data[column] / 100, COLORS[mechanism],
+                             "--" if index else "-")  # m⁻¹ -> cm⁻¹.
+    intensity = summary["intensity_w_um2"]
+    low = summary.get("reference_fig4_low_intensity_w_um2", .1)
+    high = summary.get("reference_fig4_high_intensity_w_um2", 1.)
+    level = "high" if np.isclose(intensity, high, rtol=1e-10, atol=0) else "low"
+    reference_intensity = high if level == "high" else low
+    scaled = not np.isclose(intensity, reference_intensity, rtol=1e-10, atol=0)
+    note = "Dots: digitized Jünnemann Fig. 4."
+    if reference is not None:
+        visible = ((reference["temperature_k"] >= temperature.min()) &
+                   (reference["temperature_k"] <= temperature.max()))
+        for mechanism, column, scale in [("tpa", f"tpa_{level}_cm_inv", intensity / reference_intensity),
+                                         ("fca", "fca_cm_inv", 1.), ("bga", "bga_cm_inv", 1.)]:
+            absorption_curve(ax, reference["temperature_k"][visible], reference[column][visible] * scale,
+                             COLORS[mechanism], dots=True)
+        if scaled:
+            note += f" TPA dots rescaled from {reference_intensity:g} W/µm²."
+    else:
+        note = "Digitized reference file unavailable; only model lines are shown."
+    positive = [line.get_ydata()[line.get_ydata() > 0] for line in ax.lines]
+    positive = [values[np.isfinite(values)] for values in positive if len(values)]
+    positive = [values for values in positive if len(values)]
+    if positive:
+        maximum = max(values.max() for values in positive) * 2
+        minimum = max(min(values.min() for values in positive) / 2, maximum / 1e10)
+        ax.set_ylim(minimum, maximum)
+    ax.set(yscale="log", xlim=(temperature.min(), temperature.max()),
+           xlabel="Particle temperature (K)", ylabel=r"Absorption coefficient (cm$^{-1}$)")
+    fig.suptitle("Silicon absorption: model and paper", y=.97, fontsize=13)
+    fig.text(.55, .925, f"I = {intensity:g} W/µm²  ·  λ = 1550 nm", ha="center", color="#555555")
+    comparison_legend(fig)
+    fig.text(.5, .055, note + "\nDrude mobility is extrapolated above 500 K.",
+             ha="center", va="center", fontsize=8.5, color="#555555")
+    return save(fig, output, "absorption_comparison.png", dpi)
 
 
-def tpa_plot(data, reference, summary, output, dpi):
-    """Compare the two implemented two-photon-absorption expressions."""
-    fig, ax = plt.subplots(figsize=(8.8, 5.5))
-    temperature = data["temperature_k"]
-    for model, color, style in [("printed", "#b34935", "--"), ("physical", "#225f9e", "-")]:
-        curve(ax, temperature, data[f"tpa_{model}_m_inv"] / 100, f"TPA: {model} expression", color, style)
-    for level, color in [("low", "#444444"), ("high", "#999999")]:
-        reference_curve(ax, reference, f"tpa_{level}_cm_inv", intensity_label(summary, level), color)
-    logarithmic_axes(ax, temperature, r"TPA absorption coefficient (cm$^{-1}$)")
-    fig.suptitle("Silicon: two-photon absorption | " + context(summary))
-    return save(fig, output, "tpa_comparison.png", dpi,
-                "Printed and physical expressions are evaluated at the same configured intensity.\n"
-                "Open circles: approximate paper curves at their original intensities.")
-
-
-def fca_plot(data, reference, summary, output, dpi):
-    """Compare empirical and Drude FCA, with the Sturm correction as a diagnostic."""
-    fig, ax = plt.subplots(figsize=(8.8, 5.5))
-    temperature = data["temperature_k"]
-    for column, label, color, style in [("fca_empirical_m_inv", "Empirical FCA", "#b34935", "-"),
-                                      ("fca_drude_m_inv", "Drude FCA", "#225f9e", "--"),
-                                      ("fca_sturm_corrected_m_inv", "Sturm corrected (diagnostic)", "#7e6095", ":")]:
-        if column in data.dtype.names:
-            curve(ax, temperature, data[column] / 100, label, color, style)
-    reference_curve(ax, reference, "fca_cm_inv", "Fig. 4 FCA (digitized)", "#444444")
-    logarithmic_axes(ax, temperature, r"FCA absorption coefficient (cm$^{-1}$)")
-    fig.suptitle("Silicon: free-carrier absorption | " + context(summary))
-    return save(fig, output, "fca_comparison.png", dpi,
-                "Drude mobility is extrapolated above 500 K; the empirical model uses its fitted coefficients.\n"
-                "The corrected Sturm curve is a diagnostic; it is not a fifth heating combination.")
-
-
-def silicon_power_plot(data, reference, summary, output, dpi):
-    """Compare four heating predictions with cooling and the digitized Fig. 6."""
-    fig, ax = plt.subplots(figsize=(12.3, 6.4))
-    temperature = data["temperature_k"]
-    for tpa, fca, color, style in VARIANTS:
-        curve(ax, temperature, data[f"p_abs_{tpa}_{fca}_w"], f"{tpa} TPA + {fca} FCA", color, style)
-    for column, label, color, style in [("p_linear_w", "Linear heating only", COLORS["linear"], ":"),
-                                      ("p_gas_w", "Gas cooling", COLORS["gas"], "-."),
-                                      ("p_bb_w", r"$P_{\rm BB}$: paper reference (input)", COLORS["bb"], "-")]:
-        curve(ax, temperature, data[column], label, color, style)
-    for column, label, color in [("p_abs_w", "Fig. 6 heating", "#ca8a16"),
-                                 ("p_linear_w", "Fig. 6 linear", "#9851a0"),
-                                 ("p_bb_w", "Fig. 6 radiation", "#222222")]:
-        reference_curve(ax, reference, column, label + " (digitized)", color)
-    logarithmic_axes(ax, temperature, "Power (W)")
-    ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1), borderaxespad=0)
-    fig.suptitle("Silicon: absorbed and dissipated power\n" + context(summary))
-    bb_note = "No radiation input available." if not np.any(np.isfinite(data["p_bb_w"])) else "Silicon radiation is interpolated from the paper; it is not independently validated."
-    return save(fig, output, "power_comparison.png", dpi,
-                bb_note + "\nDrude mobility is extrapolated above 500 K.\n"
-                "Open circles: approximate Fig. 6 data; original diameter 260 nm, I = 0.1 W/µm².")
-
-
-def sin_power_plot(data, summary, output, dpi):
-    """Show exactly the three total powers, with optional heating terms kept in the CSV."""
-    fig, ax = plt.subplots(figsize=(9, 5.8))
-    temperature = data["temperature_k"]
-    zeros = []
-    for column, label, color, style in [("p_abs_w", r"$P_{\rm abs}$", "#bd4c28", "-"),
-                                      ("p_gas_w", r"$P_{\rm gas}$", "#2776ad", "--"),
-                                      ("p_bb_w", r"$P_{\rm BB}^{\rm net}$", "#398657", "-.")]:
-        if not curve(ax, temperature, data[column] * 1e9, label, color, style):
-            zeros.append(label + (" = 0" if np.all(data[column] == 0) else " unavailable"))
-    logarithmic_axes(ax, temperature, "Power (nW)")
-    threshold = summary.get("decomposition_temperature_k")
-    if threshold is not None and temperature.min() <= threshold <= temperature.max():
-        ax.axvline(threshold, color="#777777", linestyle=":", linewidth=1.2)
-        ax.text(threshold, .98, r" $T_d$", transform=ax.get_xaxis_transform(), va="top")
-    if zeros:
-        ax.text(.02, .04, "; ".join(zeros), transform=ax.transAxes)
-    material = Path(summary.get("material_file", "SiN")).stem
-    fig.suptitle(material + " | " + context(summary))
-    fraction = summary.get("max_emission_fraction_outside_dipole")
-    diagnostic = f" Up to {100 * fraction:.2f}% of modeled emission fails the dipole-size criterion." if fraction is not None else ""
-    return save(fig, output, "power_balance.png", dpi,
-                "Provisional dipole radiation; full-wave validation is required." + diagnostic + "\n"
-                "Gas cooling uses the saved reference pressure; powers and heating contributions are in powers.csv.")
-
-
-def selection_plot(data, summary, output, dpi):
-    """Make the selected absorption-density sample directly inspectable."""
-    fig, ax = plt.subplots(figsize=(8.8, 4.8))
-    ax.plot(data["radius_nm"], data["density_w_m3"], ".-", color="#2776ad", markersize=4)
-    chosen = data["selected"] > 0
-    ax.scatter(data["radius_nm"][chosen], data["density_w_m3"][chosen], s=55, color="#bd4c28",
-               zorder=3, label="Selected sample")
-    ax.set(xlabel="Cylinder radius (nm)", ylabel=r"Absorbed power / volume (W m$^{-3}$)")
-    ax.ticklabel_format(axis="y", style="sci", scilimits=(-3, 4), useMathText=True)
-    ax.legend()
-    fig.suptitle("SiN: absorption selection")
-    return save(fig, output, "absorption_selection.png", dpi)
-
-
-def pressure_balance_plot(data, summary, output, dpi):
-    """Plot equilibrium balance pressure from saved powers, without solving new roots."""
+def power_balance(data, reference, summary, output, dpi):
+    """Compare one selected total absorption with cooling and the paper's total."""
     silicon = summary["profile"] == "silicon"
-    fig, ax = plt.subplots(figsize=(12.3 if silicon else 9.3, 5.8))
     temperature = data["temperature_k"]
-    denominator = summary["gas_coefficient_w_per_mbar_k"] * (
-        temperature - summary["environment_temperature_k"])
-    models = [(f"p_abs_{tpa}_{fca}_w", f"{tpa} TPA + {fca} FCA", color, style)
-              for tpa, fca, color, style in VARIANTS] if silicon else [
-                  ("p_abs_w", "SiN power balance", "#2776ad", "-")]
-    folds = []
-    for column, label, color, style in models:
-        pressure = np.full(temperature.shape, np.nan)
-        np.divide(data[column] - data["p_bb_w"], denominator,
-                  out=pressure, where=denominator > 0)
-        curve(ax, temperature, pressure, label, color, style)
-        analysis = summary.get("pressure_analysis", {}).get(column, {})
-        if analysis.get("fold_pressure_mbar") is not None:
-            folds.append((analysis["fold_temperature_k"], analysis["fold_pressure_mbar"], color))
-        if analysis.get("vacuum_temperature_k") is not None:
-            ax.text(.98, .95, f"Cold branch reaches vacuum equilibrium at "
-                    f"{analysis['vacuum_temperature_k']:.1f} K", ha="right", transform=ax.transAxes)
-    logarithmic_axes(ax, temperature, "Equilibrium balance pressure (mbar)")
-    reference = summary["reference_pressure_mbar"]
-    if reference > 0:
-        ax.axhline(reference, color="#777777", linestyle=":", linewidth=1.5,
-                   label=f"Reference pressure: {reference:g} mbar")
-        lower, upper = ax.get_ylim()
-        ax.set_ylim(min(lower, reference / 2), max(upper, reference * 2))
-    for i, (fold_temperature, fold_pressure, color) in enumerate(folds):
-        if fold_pressure > 0:
-            ax.scatter(fold_temperature, fold_pressure, color=color, edgecolor="white", s=65,
-                       zorder=4, label="Cold-branch folds" if i == 0 else None)
-    threshold = summary.get("decomposition_temperature_k")
-    if not silicon and threshold is not None and temperature.min() <= threshold <= temperature.max():
-        ax.axvline(threshold, color="#777777", linestyle=":", linewidth=1.2)
-        ax.text(threshold, .86, r" $T_d$", transform=ax.get_xaxis_transform(), va="top")
-    if ax.get_legend_handles_labels()[0]:
-        ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1), borderaxespad=0) if silicon else ax.legend(loc="lower right")
-    fig.suptitle(("Silicon" if silicon else "SiN") + ": pressure required for equilibrium\n" + context(summary))
-    return save(fig, output, "pressure_balance.png", dpi,
-                "Only positive balance pressures are shown. Turning points mark cold-branch instability;\n"
-                "a fold alone does not establish decomposition. Free-molecular gas law: high-pressure extrapolation is unvalidated.\n"
-                "Si radiation uses the paper reference; SiN radiation remains provisional.")
+    fig, ax = plt.subplots(figsize=(9.4, 7.0))
+    fig.subplots_adjust(left=.11, right=.98, bottom=.31, top=.87)
+    column = summary.get("selected_absorption_column", "p_abs_physical_drude_w" if silicon else "p_abs_w")
+    absorption_curve(ax, temperature, data[column], "#246ca0", label="Our model: total absorption")
+    pressure = summary["reference_pressure_mbar"]
+    absorption_curve(ax, temperature, data["p_gas_w"], "#368058",
+                     label=f"Gas cooling: p = {pressure:g} mbar")
+    absorption_curve(ax, temperature, data["p_bb_w"], "#8d63b4", style="--",
+                     label="BB radiation (reference input)" if silicon else "BB radiation (dipole model)")
+    if silicon:
+        paper_intensity = summary.get("reference_fig6_intensity_w_um2", .1)
+        note = "Our model: linear + physical-pairing TPA + Drude FCA + Sturm BGA."
+        if reference is not None:
+            visible = ((reference["temperature_k"] >= temperature.min()) &
+                       (reference["temperature_k"] <= temperature.max()))
+            absorption_curve(ax, reference["temperature_k"][visible], reference["p_abs_w"][visible],
+                             "#bc5733", dots=True,
+                             label=f"Jünnemann model (digitized): I = {paper_intensity:g} W/µm²")
+            if not np.isclose(summary["intensity_w_um2"], paper_intensity, rtol=1e-10, atol=0):
+                note += f"\nPaper dots stay at {paper_intensity:g} W/µm²; they are not rescaled to the model intensity."
+        else:
+            note += "\nDigitized total-absorption reference unavailable."
+        note += "\nBB: digitized Fig. 6 input, not an independent radiation calculation."
+        subtitle = (f"R = {summary['radius_nm']:g} nm  ·  λ = 1550 nm  ·  "
+                    f"Model I = {summary['intensity_w_um2']:g} W/µm²")
+    else:
+        note = "Absorption anchored to the selected optical CSV; nonlinear terms use supplied material data."
+        note += "\nBB: provisional dipole approximation. No silicon reference curves are assigned to SiN."
+        subtitle = f"R = {summary['radius_nm']:g} nm  ·  H = {summary['height_nm']:g} nm"
+    subtitle += f"  ·  Gas bath = {summary['environment_temperature_k']:g} K"
+    ax.set(yscale="log", xlim=(temperature.min(), temperature.max()),
+           xlabel="Particle temperature (K)", ylabel="Power (W)")
+    fig.suptitle(("Silicon" if silicon else "SiN") + ": absorption and cooling", y=.97, fontsize=13)
+    fig.text(.55, .92, subtitle, ha="center", fontsize=9.5, color="#555555")
+    handles, labels = ax.get_legend_handles_labels()
+    if silicon and reference is not None:
+        # Put modeled/reference absorption together, followed by the cooling terms.
+        order = [3, 0, 1, 2]
+        handles, labels = [handles[i] for i in order], [labels[i] for i in order]
+    fig.legend(handles, labels, loc="center", bbox_to_anchor=(.5, .18),
+               ncol=2, handlelength=2.7, columnspacing=2., labelspacing=.9)
+    fig.text(.5, .055, note, ha="center", va="center", fontsize=8.3, color="#555555")
+    return save(fig, output, "power_balance.png", dpi)
 
 
 def plot_results(output, dpi=200):
-    """Replot saved CSV/JSON data only; no configuration loading or recalculation."""
+    """Produce the requested figures from saved CSV/JSON data only."""
     output = Path(output)
     summary = json.loads((output / "summary.json").read_text())
     if dpi <= 0:
         raise ValueError("dpi must be positive")
+    if summary["profile"] not in ("silicon", "sin"):
+        raise ValueError("Unknown saved profile")
     powers = read_table(output / "powers.csv")
     with plt.rc_context(STYLE):
-        if summary["profile"] == "sin":
-            paths = [sin_power_plot(powers, summary, output, dpi),
-                     pressure_balance_plot(powers, summary, output, dpi)]
-            if (output / "selection.csv").exists():
-                paths.append(selection_plot(read_table(output / "selection.csv"), summary, output, dpi))
-            return paths
-        if summary["profile"] != "silicon":
-            raise ValueError("Unknown saved profile")
-        coefficients = read_table(output / "coefficients.csv")
-        references = [read_table(output / name) if (output / name).exists() else None
-                      for name in ("reference_fig4.csv", "reference_fig6.csv")]
-        return [function(coefficients, references[0], summary, output, dpi)
-                for function in (coefficient_plot, tpa_plot, fca_plot)] + [
-                    silicon_power_plot(powers, references[1], summary, output, dpi),
-                    pressure_balance_plot(powers, summary, output, dpi)]
+        paths = []
+        if summary["profile"] == "silicon":
+            reference = output / "reference_fig4.csv"
+            paths.append(absorption_comparison(read_table(output / "coefficients.csv"),
+                         read_table(reference) if reference.exists() else None, summary, output, dpi))
+        reference = output / "reference_fig6.csv"
+        paths.append(power_balance(powers, read_table(reference) if reference.exists() else None,
+                                   summary, output, dpi))
+    for name in OBSOLETE_PLOTS:
+        (output / name).unlink(missing_ok=True)  # Remove only superseded, known project plots.
+    return paths
 
 
 def main():
@@ -288,8 +199,11 @@ def main():
     parser.add_argument("--output", "-o", required=True, help="Existing result folder")
     parser.add_argument("--dpi", type=int, default=200, help="PNG resolution (default: 200)")
     args = parser.parse_args()
-    for path in plot_results(args.output, args.dpi):
-        print(path)
+    try:
+        for path in plot_results(args.output, args.dpi):
+            print(path)
+    except (OSError, ValueError, KeyError) as error:
+        parser.exit(2, f"Error: {error}\n")
 
 
 if __name__ == "__main__":

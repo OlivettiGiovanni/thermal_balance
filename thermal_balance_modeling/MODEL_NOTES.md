@@ -19,7 +19,7 @@ The driver explicitly uses photon energy **0.797 eV** in the TPA/BGA fits. This 
 
 Let \(N_j=[\exp(\theta_j/T)-1]^{-1}\), \(\Omega_j=k_B\theta_j\), and \(D=2E_\gamma-E_g\). The two phonon branches have \(\theta_j=(212,670)\) K. Sinclair's gap fit is \(E_g=1.156-7.021\times10^{-4}T^2/(1108+T)\) eV.
 
-The `printed` variant implements the population/sign pairing printed in the cited preprint:
+The **Sinclair (semi-empirical)** curve implements the population/sign pairing in the cited preprint. Its internal key remains `printed` for saved-file compatibility:
 
 \[
 \beta=10^{-11} E_g^{3/2}\sum_jK_j\{N_j(D-\Omega_j)^2+(N_j+1)(D+\Omega_j)^2\}\quad [{\rm m/W}],
@@ -37,7 +37,7 @@ n_e=n_h=n_i=3.87\times10^{22}T^{3/2}\exp[-0.605/(k_BT)]\quad [{\rm m^{-3}}],
 
 where energies and \(k_B\) are in eV and eV/K. Empirical cross sections are \(\sigma_e=1.01\times10^{-12}T\lambda^2\) and \(\sigma_h=0.51\times10^{-12}T\lambda^2\); wavelength in metres gives cross sections in m². Then \(\alpha_{\rm FCA}=n_i(\sigma_e+\sigma_h)\).
 
-The additional diagnostic curve solves Sturm's implicit expression \(n_i=3.87\times10^{16}T^{3/2}\exp[-(0.605+\Delta\epsilon)/(k_BT)]\) in cm⁻³, with \(\Delta\epsilon=-7.1\times10^{-10}\sqrt{n_i/T}\) eV. The principal Lambert-W branch gives the lower-density solution. This empirical relation has no real solution above approximately 1633.84 K; the function raises rather than inventing a continuation. The main comparison deliberately uses the uncorrected density for both FCA models.
+The additional diagnostic CSV column (not plotted) solves Sturm's implicit expression \(n_i=3.87\times10^{16}T^{3/2}\exp[-(0.605+\Delta\epsilon)/(k_BT)]\) in cm⁻³, with \(\Delta\epsilon=-7.1\times10^{-10}\sqrt{n_i/T}\) eV. The principal Lambert-W branch gives the lower-density solution. This empirical relation has no real solution above approximately 1633.84 K; the function raises rather than inventing a continuation. The main comparison deliberately uses the uncorrected density for both FCA models.
 
 Only thermally generated equilibrium carriers are included. There is no photo-carrier generation, carrier lifetime, or carrier-recombination model.
 
@@ -87,11 +87,17 @@ No silicon nonlinear constants are assigned to SiN. An optional material-specifi
 
 Gas loss is free-molecular air exchange: \(P_{\rm gas}=g\,p_{\rm mbar}(T-T_g)\), with \(g=aA\,100\bar v(\gamma+1)/[8T_g(\gamma-1)]\), \(\bar v=\sqrt{8k_BT_g/(\pi m)}\), \(m=28.965\) u and \(\gamma=1.4\). The factor 100 converts mbar to Pa. The particle temperature varies; the configured gas bath remains fixed. The accommodation coefficient is an input assumption. Continuum/transition-regime corrections are not included.
 
-For **silicon**, radiation is interpolated from digitized Fig. 6 and used as a reference input, not independently reproduced. Between the first visible point at 400 K and 300 K, the driver explicitly bridges linearly to zero net exchange. Therefore agreement of the plotted blue curve is not BB validation.
+For **silicon**, radiation is interpolated from digitized Fig. 6 and used as a reference input, not independently reproduced. Between the first visible point at 400 K and 300 K, the driver explicitly bridges linearly to zero net exchange. This input is not an independent BB validation.
 
 For **SiN**, net radiation is \(4\pi\int C_{\rm abs}(\lambda,T)[B_\lambda(T)-B_\lambda(T_g)]d\lambda\). A spheroid matches the cylinder volume and aspect ratio; its orientation-averaged dipole cross section includes radiation reaction. This is provisional, not full-wave cylinder emission. Integration covers only the supplied spectral band. Spectra without a temperature column are held fixed; temperature-dependent spectra are interpolated without extrapolation. The reported emission fraction exceeding the heuristic dipole-size limit 0.3 is a diagnostic, not an error bound.
 
-Pressure analysis follows the cold stable branch of \(p(T)=[P_{\rm abs}(T)-P_{\rm BB}(T)]/[g(T-T_g)]\), using interpolated powers. A branch minimum is reported as a fold, not automatically as decomposition. A vacuum equilibrium or crossing of the configured SiN decomposition threshold has a separate status. A fold alone does not establish the eventual high-temperature state. The reference pressure only selects the displayed gas curve.
+For each fixed intensity, define $F(T,p,I)=P_{\rm abs}(T,I)-P_{\rm BB}(T)-g p(T-T_g)$. With positive heat capacity, a root is stable when $\partial F/\partial T<0$. Equilibrium alone therefore does not define a critical pressure. The code traces the branch accessible from high pressure and reports its first fold: $F=0$ and $\partial F/\partial T=0$. Equivalently this is the first positive minimum of $p_{\rm eq}(T,I)=[P_{\rm abs}(T,I)-P_{\rm BB}(T)]/[g(T-T_g)]$. These pressure results are retained as numerical diagnostics; no critical-pressure plot is generated.
+
+Numerically, a shape-preserving cubic interpolates $Q(T)=P_{\rm abs}-P_{\rm BB}$. The roots of $H=(T-T_g)Q'-Q$ locate stationary pressures, with a negative-to-positive sign change selecting a fold. Net-power zeros are checked in temperature order so a stable vacuum equilibrium is not mistaken for a positive threshold. Roots outside the supplied domain are excluded. Critical temperature is saved for diagnostics, not swept as an independent parameter.
+
+A cold-branch fold establishes loss of that equilibrium during quasistatic evacuation, **not** infinite-temperature divergence: a hotter stable branch may exist, and the model above its upper temperature limit is unknown. Stable vacuum equilibrium/no heating are assigned zero positive threshold. An unresolved domain or reaching the configured SiN decomposition limit first gives no instability threshold (JSON null/CSV NaN); the material-limit pressure is recorded separately. The configured reference pressure changes the gas-cooling curve in the power plot, but does not alter these instability thresholds.
+
+The intensity sweep recomputes Si effective absorption and Mie heating at each intensity; changing intensity is not a linear rescaling of total power when TPA contributes. For SiN, no absolute intensity calibration was supplied, so the axis is $s=I/I_{\rm ref}$ of the imported optical CSV. At fixed field shape, $P_{\rm linear}$ and thermal $P_{\rm FCA}$ scale as $s$, while $P_{\rm TPA}$ scales as $s^2$. SiN radiation is unchanged by this illumination rescaling at a given particle temperature. The output is two Si figures (mechanism comparison and power balance), or only power balance for SiN because silicon reference curves do not apply to it. The selected Si total uses linear absorption, the existing `physical` TPA variant, unchanged Drude FCA, and Sturm BGA. The Fig. 6 total-absorption dots remain at their original 0.1 W/µm² even if the configured model intensity differs; no invalid linear rescaling is applied. BB is labelled as the digitized reference input. Gas cooling uses the configured reference pressure in mbar.
 
 ## Sources and reference data
 

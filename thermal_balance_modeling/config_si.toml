@@ -1,5 +1,5 @@
 # Jünnemann benchmark: Si sphere, R=130 nm, wavelength=1550 nm, bath=300 K.
 material = "Si"
 intensity_w_um2 = 0.1
-reference_pressure_mbar = 1
+reference_pressure_mbar = 0.1       # Gas cooling in the power-balance plot
 temperature_max_k = 1600.0

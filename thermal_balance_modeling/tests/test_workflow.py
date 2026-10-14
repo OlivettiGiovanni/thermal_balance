@@ -14,7 +14,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from inputs import load_config, select_absorption
-from run import calculate, calibrated_heating, pressure_analysis
+from run import calculate, calibrated_heating, pressure_analysis, intensity_sweep
 
 
 class WorkflowTests(unittest.TestCase):
@@ -86,9 +86,9 @@ class WorkflowTests(unittest.TestCase):
         temperature = np.linspace(300., 1600., 401)
         result = pressure_analysis(temperature, np.full_like(temperature, 1e-12),
                                    1e-8 * (temperature - 300.), 1e-10, 300.)
-        self.assertEqual(result["status"], "cold_branch_reaches_vacuum_equilibrium")
+        self.assertEqual(result["status"], "stable_to_vacuum")
         self.assertAlmostEqual(result["vacuum_temperature_k"], 300.0001, places=8)
-        self.assertIsNone(result["critical_pressure_mbar"])
+        self.assertEqual(result["critical_pressure_mbar"], 0.)
 
     def test_analytic_fold_is_not_a_decomposition_pressure(self):
         temperature = np.linspace(300., 1000., 701)
@@ -97,16 +97,17 @@ class WorkflowTests(unittest.TestCase):
         result = pressure_analysis(temperature, absorbed, np.zeros_like(temperature),
                                    1e-10, 300., limit=900.)
         self.assertTrue(result["status"].startswith("cold_branch_fold"))
-        self.assertAlmostEqual(result["fold_temperature_k"], 400., delta=0.05)
-        self.assertAlmostEqual(result["fold_pressure_mbar"], 0.2, places=5)
-        self.assertIsNone(result["critical_pressure_mbar"])
+        self.assertAlmostEqual(result["critical_temperature_k"], 400., delta=0.05)
+        self.assertAlmostEqual(result["critical_pressure_mbar"], 0.2, places=5)
+        self.assertNotIn("threshold_pressure_mbar", result)
 
     def test_stable_temperature_threshold_crossing(self):
         temperature = np.linspace(300., 1600., 401)
         result = pressure_analysis(temperature, np.full_like(temperature, 1e-9),
                                    np.zeros_like(temperature), 1e-10, 300., limit=1300.)
         self.assertEqual(result["status"], "temperature_limit_crossing")
-        self.assertAlmostEqual(result["critical_pressure_mbar"], 0.01, places=12)
+        self.assertIsNone(result["critical_pressure_mbar"])
+        self.assertAlmostEqual(result["threshold_pressure_mbar"], 0.01, places=12)
 
     def test_reference_pressure_changes_only_gas_in_both_profiles(self):
         config_path, _, _ = self.fixture()
@@ -117,6 +118,9 @@ class WorkflowTests(unittest.TestCase):
             with self.subTest(material=config["material"]):
                 first, summary_first = calculate(config)
                 second, summary_second = calculate({**config, "reference_pressure_mbar": 1.})
+                self.assertEqual(first["critical_pressure.csv"]["status"], second["critical_pressure.csv"]["status"])
+                np.testing.assert_allclose(first["critical_pressure.csv"]["critical_pressure_mbar"],
+                                           second["critical_pressure.csv"]["critical_pressure_mbar"], equal_nan=True)
                 first, second = first["powers.csv"], second["powers.csv"]
                 np.testing.assert_allclose(second["p_gas_w"], 100. * first["p_gas_w"], rtol=1e-12)
                 self.assertGreater(float(second["p_gas_w"][-1]), float(first["p_gas_w"][-1]))
@@ -139,9 +143,11 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertTrue((output / "powers.csv").is_file())
         self.assertEqual(json.loads((output / "summary.json").read_text())["profile"], "sin")
-        expected = ("power_balance.png", "absorption_selection.png")
+        expected = ("power_balance.png",)
+        self.assertEqual({path.name for path in output.glob("*.png")}, set(expected))
         for name in expected:
             self.assertGreater((output / name).stat().st_size, 1000)
+
             (output / name).unlink()
         # Replotting must consume saved numerical results, not resolve source paths.
         for path in (config, absorption, spectrum):
@@ -153,6 +159,39 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         for name in expected:
             self.assertGreater((output / name).stat().st_size, 1000)
+
+
+    def test_sin_sweep_scales_linear_and_two_photon_power_differently(self):
+        config_path, _, _ = self.fixture()
+        config = {**load_config(config_path), "intensity_scale_range": [.25, 4.], "intensity_points": 3}
+        temperature = np.linspace(300., 1600., 1301)
+        powers = dict(temperature_k=temperature, p_linear_w=np.full_like(temperature, 1e-9),
+                      p_tpa_w=1e-13*(temperature-300)**2, p_fca_w=np.zeros_like(temperature),
+                      p_bb_w=np.zeros_like(temperature))
+        config["decomposition_temperature_k"] = 1500.
+        table = intensity_sweep(config, powers, None, 1e-10)
+        scale = np.asarray(table["intensity_scale"])
+        np.testing.assert_allclose(table["critical_pressure_mbar"], .2*scale**1.5, rtol=2e-5)
+
+    def test_silicon_produces_only_requested_figures_and_replots(self):
+        config = self.folder/"si.toml"
+        config.write_text('material="Si"\nintensity_points=3\nintensity_range_w_um2=[0.05,0.2]\n')
+        output = self.folder/"silicon"
+        result = subprocess.run([sys.executable, str(ROOT/"run.py"), "--config", str(config),
+                                 "--output", str(output), "--dpi", "50"], cwd=self.folder,
+                                text=True, capture_output=True, timeout=60)
+        self.assertEqual(result.returncode, 0, result.stdout+result.stderr)
+        expected = {"absorption_comparison.png", "power_balance.png"}
+        self.assertEqual({path.name for path in output.glob("*.png")}, expected)
+        (output/"power_comparison.png").write_bytes(b"obsolete generated plot")
+        (output/"critical_pressure.png").write_bytes(b"obsolete generated plot")
+        (output/"critical_pressure.csv").unlink()  # Replot has no dependency on the removed figure.
+        config.unlink()
+        shutil.rmtree(output/"inputs")
+        result = subprocess.run([sys.executable, str(ROOT/"plotting.py"), "--output", str(output),
+                                 "--dpi", "50"], cwd=self.folder, text=True, capture_output=True, timeout=60)
+        self.assertEqual(result.returncode, 0, result.stdout+result.stderr)
+        self.assertEqual({path.name for path in output.glob("*.png")}, expected)
 
 
 if __name__ == "__main__":

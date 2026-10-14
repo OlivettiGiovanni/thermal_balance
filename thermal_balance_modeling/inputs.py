@@ -10,6 +10,7 @@ except ModuleNotFoundError:
 
 
 DEFAULTS = dict(intensity_w_um2=.1, reference_pressure_mbar=.1,
+                intensity_range_w_um2=[.01, 1.], intensity_scale_range=[.1, 10.], intensity_points=41,
                 temperature_max_k=1600., temperature_points=401,
                 environment_temperature_k=300., accommodation=.8,
                 selection="max_peak", height_nm=400.,
@@ -27,12 +28,12 @@ def load_config(path):
     material = supplied.get("material")
     if material not in ("Si", "SiN"):
         raise ValueError("material must be 'Si' or 'SiN'")
-    irrelevant = ({"intensity_w_um2"} if material == "SiN" else
-                  {"absorption_file", "spectrum_file", "nonlinear_file", "height_nm", "selection", "decomposition_temperature_k"})
+    irrelevant = ({"intensity_w_um2", "intensity_range_w_um2"} if material == "SiN" else
+                  {"absorption_file", "spectrum_file", "nonlinear_file", "height_nm", "selection", "decomposition_temperature_k", "intensity_scale_range"})
     if set(supplied) & irrelevant:
         raise ValueError(f"Unused keys for {material}: {sorted(set(supplied) & irrelevant)}")
     config = {**DEFAULTS, "temperature_max_k": 1600. if material == "Si" else 2500., **supplied}
-    for key in (set(DEFAULTS) - {"selection", "nonlinear_file"}):
+    for key in (set(DEFAULTS) - {"selection", "nonlinear_file", "intensity_range_w_um2", "intensity_scale_range"}):
         value = config[key]
         if isinstance(value, bool) or not isinstance(value, (int, float)) or not np.isfinite(value) or value < 0:
             raise ValueError(f"{key} must be a finite nonnegative number")
@@ -40,6 +41,14 @@ def load_config(path):
         raise ValueError("height_nm > 0 and 0 < accommodation <= 1 are required")
     if not isinstance(config["temperature_points"], int) or config["temperature_points"] < 30:
         raise ValueError("temperature_points must be an integer >= 30")
+    if not isinstance(config["intensity_points"], int) or config["intensity_points"] < 2:
+        raise ValueError("intensity_points must be an integer >= 2")
+    for key in ("intensity_range_w_um2", "intensity_scale_range"):
+        bounds = config[key]
+        if (not isinstance(bounds, list) or len(bounds) != 2 or
+            any(isinstance(v, bool) or not isinstance(v, (int, float)) or not np.isfinite(v) for v in bounds) or
+            not 0 < bounds[0] < bounds[1]):
+            raise ValueError(f"{key} must contain two positive increasing numbers")
     if not 0 < config["environment_temperature_k"] < config["temperature_max_k"]:
         raise ValueError("Require 0 < bath temperature < temperature_max_k")
     if config["selection"] not in ("first_peak", "max_peak"):

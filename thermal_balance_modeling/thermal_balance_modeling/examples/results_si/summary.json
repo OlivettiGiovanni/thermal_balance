@@ -1,0 +1,103 @@
+{
+  "profile": "silicon",
+  "radius_nm": 130.0,
+  "height_nm": null,
+  "wavelength_nm": 1550.0,
+  "intensity_w_um2": 0.1,
+  "photon_energy_fit_ev": 0.797,
+  "reference_fig4_low_intensity_w_um2": 0.1,
+  "reference_fig4_high_intensity_w_um2": 1.0,
+  "reference_fig6_intensity_w_um2": 0.1,
+  "selected_absorption_column": "p_abs_physical_drude_w",
+  "selected_absorption_model": "linear + physical-pairing TPA + Drude FCA + Sturm BGA",
+  "carrier_model": "Sturm uncorrected thermal equilibrium; corrected curve diagnostic only",
+  "radiation_model": "digitized Fig. 6 INPUT; not independently reproduced",
+  "geometry_model": "homogeneous sphere; fixed real refractive index 3.48",
+  "drude_mobility_validity_k": [
+    250,
+    500
+  ],
+  "drude_extrapolated_above_k": 500,
+  "schema_version": 3,
+  "reference_pressure_mbar": 0.1,
+  "temperature_max_k": 1600.0,
+  "environment_temperature_k": 300.0,
+  "gas_model": "free-molecular air, mass=28.965 u, gamma=1.4",
+  "accommodation": 0.8,
+  "gas_coefficient_w_per_mbar_k": 1.989012784989214e-11,
+  "pressure_analysis": {
+    "p_abs_printed_empirical_w": {
+      "status": "cold_branch_fold",
+      "critical_pressure_mbar": 0.21007643630416445,
+      "critical_temperature_k": 465.5780495161031
+    },
+    "p_abs_printed_drude_w": {
+      "status": "cold_branch_fold",
+      "critical_pressure_mbar": 0.1730870658291704,
+      "critical_temperature_k": 519.6469997126959
+    },
+    "p_abs_physical_empirical_w": {
+      "status": "cold_branch_fold",
+      "critical_pressure_mbar": 0.1735661073978195,
+      "critical_temperature_k": 457.30235223621435
+    },
+    "p_abs_physical_drude_w": {
+      "status": "cold_branch_fold",
+      "critical_pressure_mbar": 0.1453783528141331,
+      "critical_temperature_k": 509.20227945470936
+    }
+  },
+  "paper_comparison": {
+    "fca_empirical_m_inv": {
+      "median_model_to_reference": 1.867134225286163,
+      "rms_log10_ratio": 0.31630380114252377,
+      "reference_points": 125
+    },
+    "bga_m_inv": {
+      "median_model_to_reference": 1.0058784288557976,
+      "rms_log10_ratio": 0.005877019303924939,
+      "reference_points": 58
+    },
+    "tpa_printed_m_inv": {
+      "median_model_to_reference": 1.0013543089740877,
+      "rms_log10_ratio": 0.0009904621854895934,
+      "reference_points": 131
+    },
+    "tpa_physical_m_inv": {
+      "median_model_to_reference": 0.9234701292719116,
+      "rms_log10_ratio": 0.05645819807068744,
+      "reference_points": 131
+    },
+    "p_linear_w": {
+      "median_model_to_reference": 1.0000721911719646,
+      "rms_log10_ratio": 3.1351096003767834e-05,
+      "reference_points": 122
+    },
+    "p_abs_printed_empirical_w": {
+      "median_model_to_reference": 1.5084921695330684,
+      "rms_log10_ratio": 0.22516115895896174,
+      "reference_points": 122
+    },
+    "p_abs_printed_drude_w": {
+      "median_model_to_reference": 0.520280925914691,
+      "rms_log10_ratio": 0.30163184635765794,
+      "reference_points": 122
+    },
+    "p_abs_physical_empirical_w": {
+      "median_model_to_reference": 1.4893838214171535,
+      "rms_log10_ratio": 0.2240945593154859,
+      "reference_points": 122
+    },
+    "p_abs_physical_drude_w": {
+      "median_model_to_reference": 0.5148790117627582,
+      "rms_log10_ratio": 0.30806859971078393,
+      "reference_points": 122
+    }
+  },
+  "pressure_sweep_axis": "intensity_w_um2",
+  "critical_pressure_definition": "Loss of the cold stable equilibrium during decreasing pressure: F=0 and dF/dT=0; not a proof of infinite-temperature divergence",
+  "intensity_scaling_note": "Si uses incident intensity in W/um^2; SiN uses I/I_ref for the imported optical CSV with fixed field shape",
+  "pressure_status_counts": {
+    "cold_branch_fold": 164
+  }
+}
