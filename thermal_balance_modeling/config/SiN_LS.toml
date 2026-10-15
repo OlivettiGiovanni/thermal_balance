@@ -1,0 +1,61 @@
+# INPUT TEMPLATE: supply a cylinder-simulation CSV specific to this material.
+# The absorption_file path deliberately names a file not bundled here.
+# Geometry, n_0 and simulation calibration below are starting assumptions;
+# replace them with the actual simulation metadata before quantitative use.
+
+[material]
+name = "Low-stress SiN"
+wavelength_nm = 1550.0 # Laser wavelength [nm]
+n_0 = 2.13 # ASSUMED refractive index used in the cylinder simulation
+reference_temperature_k = 300.0 # T0 [K]; optical baseline and relaxation-time reference
+
+[data]
+# Paths are relative to this TOML file, independent of the working directory.
+optical_file = "../data/material/SiN_LS.csv" # Material n,k versus wavelength and temperature
+absorption_file = "../data/user_optics/SiN_LS_cylinders.csv" # Cylinder radius,height,p_abs_W
+
+[geometry]
+radius_nm = "max_peak" # Radius [nm], "first_peak", or "max_peak"
+height_nm = 400.0 # Height [nm]; must match the imported cylinder simulation
+
+[linear]
+# ASSUMED simulation calibration; alpha=4*pi*k/lambda in inverse metres.
+simulation_alpha_m_inv = 1.0
+simulation_intensity_w_um2 = 0.1
+
+[tpa]
+# No validated SiN coefficient set is supplied: this term is explicitly zero.
+weights = [0.0, 0.0]
+
+[fca]
+# EXPLORATORY transfer from photoexcited SiN (Mincigrucci), not a validated
+# equilibrium thermal-carrier model of this stress or annealing category.
+conductivity_masses_m0 = [0.5, 0.5] # electron, hole; units of free-electron mass
+# n_i(T) = A_i * T^1.5 * exp(-activation_ev_i / (k_B*T)).
+density_prefactors = [4.4624361005e21, 4.4624361005e21] # m^-3 K^-1.5
+activation_ev = [2.25, 2.25] # Carrier activation energies [eV]
+# Relaxation times add: tau_i(T) = sum_j tau0_ji * (T/T0)^p_ji; Gamma_i = 1/tau_i.
+# Each relaxation_times_s entry is a contribution at T0, in seconds [s].
+relaxation_times_s = [[1.9924779765e-12, 1.9924779765e-12]]
+temperature_exponents = [[-1.5, -1.5]]
+
+[bga]
+# No validated SiN BGA set is supplied: both contributions are explicitly zero.
+sqrt_weights = [0.0, 0.0]
+quadratic_weights = [0.0, 0.0]
+
+[experiment]
+intensity_w_um2 = 0.1 # Incident experimental laser intensity
+bath_temperature_k = 300.0 # Bath temperature [K]
+reference_pressure_mbar = 0.1
+temperature_max_k = 1950.0 # Upper calculation temperature [K]
+decomposition_temperature_k = 1950.0 # Cutoff [K]; assumed, not measured for this specimen
+
+[gas]
+mass_amu = 28.965 # Air effective molecular mass
+gamma = 1.4 # Heat-capacity ratio
+accommodation = 0.8 # Assumed energy-accommodation coefficient
+
+[radiation]
+# Use supported n(lambda,T), k(lambda,T); otherwise the reference spectrum.
+wavelength_range_um = [1.0, 100.0]

@@ -1,0 +1,71 @@
+{
+  "material": "SiN_HS",
+  "name": "High-stress LPCVD SiN",
+  "phase": "amorphous",
+  "sources": [
+    {
+      "citation": "Land et al., Sub-ppm Nanomechanical Absorption Spectroscopy of Silicon Nitride",
+      "doi": "10.1021/acs.nanolett.4c00737",
+      "url": "https://arxiv.org/abs/2312.05249",
+      "numeric_source": "https://arxiv.org/html/2312.05249v1",
+      "kind": "Eight minimum extinction coefficients stated explicitly in the author preprint text, in ppm, converted to dimensionless k.",
+      "specimen": "High-tensile-stress stoichiometric LPCVD Si3N4 trampolines; stress 0.85 GPa in the model.",
+      "caveat": "Several devices/wafers were studied; the 1550 nm point is from a second device type. Post-deposition annealing history is not specified."
+    },
+    {
+      "citation": "Johnson et al., Optics Express 30, 46134-46146 (2022)",
+      "doi": "10.1364/OE.477102",
+      "url": "https://par.nsf.gov/biblio/10440236",
+      "kind": "Measured LPCVD thermo-optic coefficient, Eq. (3), averaged over 1460-1550 nm",
+      "range_k": [
+        300,
+        460
+      ],
+      "equation": "dn/dT = 2.14e-11*T**2 + 2.02e-8*T + 1.71e-5 [1/K]",
+      "sample_match": "Stress and annealing state unspecified; transferred to the selected SiN formulation as an explicit approximation.",
+      "construction": "Integrate dn/dT from 300 K and add the selected material room-temperature n at 1550 nm. These are sampled fit values, not measured n(T) for this specimen."
+    }
+  ],
+  "coverage": {
+    "n": {
+      "room_wavelength_um": [
+        1.55,
+        1.55
+      ],
+      "temperature_at_1550nm_k": [
+        300.0,
+        460.0
+      ]
+    },
+    "k": {
+      "room_wavelength_um": [
+        0.532,
+        1.55
+      ],
+      "temperature_at_1550nm_k": [
+        300.0,
+        300.0
+      ]
+    }
+  },
+  "room_spectrum_borrowed": true,
+  "borrowed_references": [
+    {
+      "property": "n(300 K,1550 nm) and n(T)",
+      "reference": "Johnson 2022",
+      "reason": "LPCVD film with unspecified stress/annealing state."
+    }
+  ],
+  "notes": [
+    "Only eight room-temperature k points and one room-temperature n point are present; missing wavelengths require an explicitly configured, documented fallback.",
+    "Target category is high-stress nonannealed SiN, but the Land source does not establish its annealing history.",
+    "No measured k(T) is bundled. Do not extend this sparse near-IR k spectrum into the thermal infrared."
+  ],
+  "csv_file": "SiN_HS.csv",
+  "schema": "temperature_k,wavelength_um,n,k; empty n or k means unknown",
+  "nominal_room_temperature_k": 300,
+  "sha256": "4207c9be6818d143fca7d2adc027efb2aaf71c5cb99d447ac89a3b78209e5ef5",
+  "temperature_other_reference_used": true,
+  "suggested_spectral_fallback": "SiN_LS.csv",
+  "fallback_policy": "The suggested file is used only when explicitly named by data.fallback_file in a configuration."
+}

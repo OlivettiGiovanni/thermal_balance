@@ -1,0 +1,67 @@
+{
+  "material": "SiN_LS",
+  "name": "Low-stress LPCVD SiN",
+  "phase": "amorphous",
+  "sources": [
+    {
+      "citation": "Cataldo et al., Optics Letters 37, 4200-4202 (2012)",
+      "doi": "10.1364/OL.37.004200",
+      "url": "https://arxiv.org/abs/1209.2987",
+      "kind": "Existing project table sampled from the published fitted infrared dielectric model; not raw measured points",
+      "specimen": "Low-stress LPCVD SiNx, precursor SiH2Cl2/NH3 ratio5:1, tensile stress below100 MPa; optical films0.5 and2.3um"
+    },
+    {
+      "citation": "Johnson et al., Optics Express 30, 46134-46146 (2022)",
+      "doi": "10.1364/OE.477102",
+      "url": "https://par.nsf.gov/biblio/10440236",
+      "kind": "Measured LPCVD thermo-optic coefficient, Eq. (3), averaged over 1460-1550 nm",
+      "range_k": [
+        300,
+        460
+      ],
+      "equation": "dn/dT = 2.14e-11*T**2 + 2.02e-8*T + 1.71e-5 [1/K]",
+      "sample_match": "Stress and annealing state unspecified; transferred to the selected SiN formulation as an explicit approximation.",
+      "construction": "Integrate dn/dT from 300 K and add the selected material room-temperature n at 1550 nm. These are sampled fit values, not measured n(T) for this specimen."
+    }
+  ],
+  "coverage": {
+    "n": {
+      "room_wavelength_um": [
+        1.0,
+        666.666666667
+      ],
+      "temperature_at_1550nm_k": [
+        300.0,
+        460.0
+      ]
+    },
+    "k": {
+      "room_wavelength_um": [
+        1.0,
+        666.666666667
+      ],
+      "temperature_at_1550nm_k": [
+        300.0,
+        300.0
+      ]
+    }
+  },
+  "room_spectrum_borrowed": false,
+  "borrowed_references": [
+    {
+      "property": "n(T) at 1550 nm",
+      "reference": "Johnson 2022",
+      "reason": "Stress/annealing state not matched; only the thermo-optic increment is transferred."
+    }
+  ],
+  "notes": [
+    "300 K denotes nominal room-temperature data, not a separately measured exact temperature.",
+    "The Cataldo model is sampled over 1-666.667 um; near-IR extrapolation of this infrared fit must not replace the absorption simulation calibration.",
+    "No measured k(T) is bundled."
+  ],
+  "csv_file": "SiN_LS.csv",
+  "schema": "temperature_k,wavelength_um,n,k; empty n or k means unknown",
+  "nominal_room_temperature_k": 300,
+  "sha256": "1b0d8d0df0d8308279e3dc3351959eada8c9bd6388f9dae38d7beb4cd07bfe16",
+  "temperature_other_reference_used": true
+}

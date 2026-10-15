@@ -1,0 +1,99 @@
+{
+  "material": "SiN_HS_annealed",
+  "name": "Annealed LPCVD SiN (high-stress category)",
+  "phase": "amorphous",
+  "sources": [
+    {
+      "citation": "Luke et al., Optics Letters 40, 4823-4826 (2015)",
+      "doi": "10.1364/OL.40.004823",
+      "url": "https://lipson.ee.columbia.edu/sites/lipson.ee.columbia.edu/files/content/Broadband%20mid-infrared%20frequency%20comb%20generation%20in%20a%20Si3N4%20microresonator%20.pdf",
+      "kind": "Published Sellmeier n fit (0.310-5.504 um), then digitized fitted n and k curves from Fig. 1 (1.4-31.6 um).",
+      "specimen": "340 nm LPCVD Si3N4 on 3.1 um thermal SiO2/silicon; annealed 3 h at 1200 C",
+      "stress": "Numerical residual stress of the optical-characterization sample not established"
+    },
+    {
+      "citation": "Johnson et al., Optics Express 30, 46134-46146 (2022)",
+      "doi": "10.1364/OE.477102",
+      "url": "https://par.nsf.gov/biblio/10440236",
+      "kind": "Measured LPCVD thermo-optic coefficient, Eq. (3), averaged over 1460-1550 nm",
+      "range_k": [
+        300,
+        460
+      ],
+      "equation": "dn/dT = 2.14e-11*T**2 + 2.02e-8*T + 1.71e-5 [1/K]",
+      "sample_match": "Stress and annealing state unspecified; transferred to the selected SiN formulation as an explicit approximation.",
+      "construction": "Integrate dn/dT from 300 K and add the selected material room-temperature n at 1550 nm. These are sampled fit values, not measured n(T) for this specimen."
+    }
+  ],
+  "coverage": {
+    "n": {
+      "room_wavelength_um": [
+        0.31,
+        31.6
+      ],
+      "temperature_at_1550nm_k": [
+        300.0,
+        460.0
+      ]
+    },
+    "k": {
+      "room_wavelength_um": [
+        5.1,
+        31.6
+      ],
+      "temperature_at_1550nm_k": null
+    }
+  },
+  "room_spectrum_borrowed": true,
+  "borrowed_references": [
+    {
+      "property": "Room-temperature spectrum",
+      "reference": "Luke 2015",
+      "reason": "Annealed LPCVD sample; numeric residual stress is not established."
+    },
+    {
+      "property": "n(T) at 1550 nm",
+      "reference": "Johnson 2022",
+      "reason": "Stress/annealing state not matched; only the thermo-optic increment is transferred."
+    }
+  ],
+  "digitization": {
+    "approximate_graphical_resolution": {
+      "n": 0.03,
+      "k": 0.02
+    },
+    "k_missing_intervals_um": [
+      [
+        1.4,
+        5.0
+      ],
+      [
+        5.5,
+        5.9
+      ],
+      [
+        6.5,
+        6.5
+      ],
+      [
+        7.0,
+        7.2
+      ]
+    ],
+    "missing_value_rule": "Previously rounded graphical k=0 entries are blank here because these losses are unresolved, not measured zero.",
+    "source_pdf_sha256": "111ce7631a8b0ae970956c6d55f4fea7064dfbcec852dd57466c34ecd7cd9628",
+    "figure_sha256": "15d660db4244b0594ae1714fce0cb34f4525fcd4c2dc99cdf0afa88073a8311a"
+  },
+  "notes": [
+    "Nominal 300 K optical data; 1200 C is the prior anneal temperature, not a measurement temperature.",
+    "No measured k(T) is bundled. A configured Cataldo fallback may supply spectral gaps; it is not matched to this film.",
+    "Near-IR n at digitized-curve wavelengths is interpolated from the denser published Sellmeier sampling."
+  ],
+  "csv_file": "SiN_HS_annealed.csv",
+  "schema": "temperature_k,wavelength_um,n,k; empty n or k means unknown",
+  "nominal_room_temperature_k": 300,
+  "sha256": "e12c5750d46de3cd87f6c08f9c3d174644b6b292d7a8b227c15b6f5a534e9798",
+  "temperature_other_reference_used": true,
+  "suggested_spectral_fallback": "SiN_LS.csv",
+  "fallback_policy": "The suggested file is used only when explicitly named by data.fallback_file in a configuration."
+}

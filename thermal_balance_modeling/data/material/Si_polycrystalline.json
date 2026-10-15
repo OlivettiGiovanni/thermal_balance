@@ -1,0 +1,36 @@
+{
+  "material": "Si_polycrystalline",
+  "name": "Polycrystalline Si",
+  "status": "unavailable_template",
+  "sources": [],
+  "coverage": {
+    "n": {
+      "room_wavelength_um": null,
+      "temperature_at_1550nm_k": null
+    },
+    "k": {
+      "room_wavelength_um": null,
+      "temperature_at_1550nm_k": null
+    }
+  },
+  "borrowed_references": [],
+  "room_spectrum_borrowed": false,
+  "notes": [
+    "No verified numeric poly-Si n,k table has been bundled. Fill this template with data matching your film before use.",
+    "No automatic crystalline-Si or hydrogenated-amorphous-Si substitution is authorized."
+  ],
+  "literature_leads": [
+    {
+      "doi": "10.1038/s41598-022-21578-6",
+      "note": "Iadanza et al. (2022), laser-crystallized films; not imported here."
+    },
+    {
+      "doi": "10.1557/PROC-470-81",
+      "note": "Chen et al. (1997), poly-Si infrared properties; no verified numeric table imported."
+    }
+  ],
+  "csv_file": "Si_polycrystalline.csv",
+  "schema": "temperature_k,wavelength_um,n,k; empty n or k means unknown",
+  "nominal_room_temperature_k": 300,
+  "sha256": "76003724f3c4629bee2367ba61e45395d08e5c417090423adb4017ea32d4e631"
+}

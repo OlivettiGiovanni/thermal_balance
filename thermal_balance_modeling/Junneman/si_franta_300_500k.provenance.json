@@ -1,0 +1,91 @@
+{
+  "label": "Float-zone crystalline Si, Franta 2017/2018",
+  "phase": "crystalline",
+  "specimen": "Float-zone crystalline silicon; not polycrystalline or amorphous",
+  "primary_doi": [
+    "10.1016/j.apsusc.2017.02.021",
+    "10.1063/1.5026195"
+  ],
+  "source_kind": "Author-provided tables of a dispersion model fitted to ellipsometry and spectrophotometry, not raw measurement points",
+  "table_wavelength_um": [
+    0.0309963,
+    309.963
+  ],
+  "paper_measurement_wavelength_um_approx": [
+    0.030996,
+    142.857
+  ],
+  "caveat": "The tabulated extension above about 143 um exceeds the 2017 paper measured band. CSV values are unchanged author-model spectra; the separate runtime BB extrapolation does not replace these source values.",
+  "numeric_source": "https://refractiveindex.info/database/data/main/Si/nk/Franta-300K.yml",
+  "numeric_license": "CC0 1.0 refractiveindex.info database",
+  "temperatures_k": [
+    300,
+    350,
+    400,
+    450,
+    500
+  ],
+  "paper_measurement_temperature_range_k": [
+    5,
+    700
+  ],
+  "numeric_sources": [
+    "https://refractiveindex.info/database/data/main/Si/nk/Franta-300K.yml",
+    "https://refractiveindex.info/database/data/main/Si/nk/Franta-350K.yml",
+    "https://refractiveindex.info/database/data/main/Si/nk/Franta-400K.yml",
+    "https://refractiveindex.info/database/data/main/Si/nk/Franta-450K.yml",
+    "https://refractiveindex.info/database/data/main/Si/nk/Franta-500K.yml"
+  ],
+  "temperature_caveat": "Bundled numeric tables end at 500 K, despite the paper's broader experimental range. No values above 500 K have been fabricated.",
+  "csv_file": "si_franta_300_500k.csv",
+  "sha256": "806772038c65cceed924d93fcfbf9292b1fbaf5a6a12547a253281392286c596",
+  "retrieved_date": "2026-10-13",
+  "material": "Si_crystalline",
+  "name": "Crystalline Si",
+  "sources": [
+    {
+      "doi": [
+        "10.1016/j.apsusc.2017.02.021",
+        "10.1063/1.5026195"
+      ],
+      "numeric_sources": [
+        "https://refractiveindex.info/database/data/main/Si/nk/Franta-300K.yml",
+        "https://refractiveindex.info/database/data/main/Si/nk/Franta-350K.yml",
+        "https://refractiveindex.info/database/data/main/Si/nk/Franta-400K.yml",
+        "https://refractiveindex.info/database/data/main/Si/nk/Franta-450K.yml",
+        "https://refractiveindex.info/database/data/main/Si/nk/Franta-500K.yml"
+      ],
+      "kind": "Author-provided tables of a dispersion model fitted to ellipsometry and spectrophotometry, not raw measurement points"
+    }
+  ],
+  "coverage": {
+    "n": {
+      "room_wavelength_um": [
+        0.0309963,
+        309.963
+      ],
+      "temperature_at_1550nm_k": [
+        300.0,
+        500.0
+      ]
+    },
+    "k": {
+      "room_wavelength_um": [
+        0.0309963,
+        309.963
+      ],
+      "temperature_at_1550nm_k": [
+        300.0,
+        500.0
+      ]
+    }
+  },
+  "borrowed_references": [],
+  "room_spectrum_borrowed": false,
+  "laser_rows": "1550 nm rows are linearly interpolated between the original neighboring wavelengths at each supplied temperature.",
+  "schema": "temperature_k,wavelength_um,n,k; empty n or k means unknown",
+  "nominal_room_temperature_k": 300,
+  "use": "Benchmark BB_Franta uses the native 300, 350, 400, 450, 500 K spectra in a common 0.4\u2013100 um integration band. The benchmark fits two temperature-scaling parameters to dipole powers at 350, 400, 450 K, with exact 300/500 K optical anchors and an explicit fixed Drude correction. The fitted dielectric function is extrapolated up to 1600 K; it is not additional Franta data. No room-optics reset above 500 K.",
+  "benchmark": "The plot compares dipole and full Mie radiation using the same fitted hot optics, dipole and full Mie radiation with fixed 300 K optics, native Franta dipole points, and digitized Junnemann radiation. Hot Mie uses the same two-parameter extrapolation above 500 K without any extra fit. All calculated radiation curves share sphere geometry and bath temperature.",
+  "extrapolation_scope": "The reduced fit is used only over 0.4\u2013100 um; its UV continuation can become nonpassive. Code rejects negative imaginary permittivity rather than clipping it. The CSV itself retains its full original wavelength coverage."
+}

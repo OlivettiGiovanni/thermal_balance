@@ -1,0 +1,28 @@
+{
+  "csv_file": "reported_SiN_point.csv",
+  "schema": "radius_nm,height_nm,p_abs_W",
+  "sha256": "c944be0b19cd2c1f50c33332f820584d4262a3596fd76dd1f9588cb7282d9a4d",
+  "source": "One historical point from a user-provided plot, recorded 2026-10-12.",
+  "status": "illustrative_historical_point_not_a_radius_sweep",
+  "reported": {
+    "radius_nm": 585,
+    "height_nm": 400,
+    "p_abs_W": 1.1317201e-09
+  },
+  "not_reported": [
+    "simulation absorption coefficient",
+    "simulation intensity",
+    "simulation refractive index",
+    "film optical-constant provenance"
+  ],
+  "configuration_assumptions": {
+    "simulation_alpha_m_inv": 1.0,
+    "simulation_intensity_w_um2": 0.1,
+    "n_0": 2.0
+  },
+  "notes": [
+    "The SiN_HS example declares these three calibration assumptions explicitly. Its numerical predictions are conditional on them.",
+    "One point cannot establish a peak or support a radius-selection sweep.",
+    "Do not use this historical point as a simulation of low-stress, annealed, crystalline-Si, or polycrystalline-Si samples."
+  ]
+}
